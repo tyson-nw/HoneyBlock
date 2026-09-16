@@ -1,7 +1,6 @@
 <?php
 
 use Honeyblock\Honeyblock\Facades\Honeyblock;
-use Honeyblock\Honeyblock\Http\Middleware\HoneyblockMiddleware;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 
@@ -9,7 +8,6 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // config(['honeyblock.base_timeout' => 0]);
-
 
     Route::get('/valid-page', fn () => 'OK');
     Route::get('/wp-admin/login', fn () => 'Trap Page');

@@ -20,7 +20,7 @@ test('list command displays ips and unforgiven counts', function () {
             [
                 ['192.168.1.10', '2'],
                 ['192.168.1.20', '1'],
-            ]
+            ],
         )
         ->assertExitCode(0);
 });

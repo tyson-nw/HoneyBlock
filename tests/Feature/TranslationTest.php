@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\App;
 
 test('all translatable strings in src exist in locale json files', function () {
     $locales = ['pt_BR', 'es', 'ja', 'zh_CN', 'de', 'fr'];
-    $srcPath = realpath(__DIR__ . '/../../src');
+    $srcPath = realpath(__DIR__.'/../../src');
 
     // 1. Scan src/ directory for __('...') strings
     $extractedKeys = [];
@@ -33,7 +33,7 @@ test('all translatable strings in src exist in locale json files', function () {
 
     // 2. Assert every extracted key is present in each locale JSON file
     foreach ($locales as $locale) {
-        $jsonPath = __DIR__ . "/../../lang/{$locale}.json";
+        $jsonPath = __DIR__."/../../lang/{$locale}.json";
 
         expect(file_exists($jsonPath))->toBeTrue("Missing translation file: lang/{$locale}.json");
 
@@ -56,6 +56,6 @@ test('commands render portuguese output when locale is set to pt_BR', function (
     $this->artisan('honeyblock:whitelist')
         ->expectsOutputToContain('Nenhum IP encontrado na lista branca.')
         ->assertExitCode(0);
-    
+
     App::setLocale('en');
 });

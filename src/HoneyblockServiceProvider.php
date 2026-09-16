@@ -7,9 +7,7 @@ namespace Honeyblock\Honeyblock;
 use Honeyblock\Honeyblock\Console\Commands\HoneyblockForgiveCommand;
 use Honeyblock\Honeyblock\Console\Commands\HoneyblockListCommand;
 use Honeyblock\Honeyblock\Console\Commands\HoneyblockWhitelistCommand;
-
 use Honeyblock\Honeyblock\Http\Middleware\HoneyblockMiddleware;
-
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,7 +30,7 @@ class HoneyblockServiceProvider extends ServiceProvider
     {
         $this->loadJsonTranslationsFrom(__DIR__.'/../lang');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        
+
         $kernel = $this->app->make(Kernel::class);
         $kernel->pushMiddleware(HoneyblockMiddleware::class);
 

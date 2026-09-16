@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Honeyblock\Honeyblock\Http\Middleware;
 
-use Honeyblock\Honeyblock\Honeyblock;
-
 use Closure;
+use Honeyblock\Honeyblock\Honeyblock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -45,6 +44,7 @@ class HoneyblockMiddleware
             $baseTimeout = (float) config('honeyblock.base_timeout', 1);
             $multiplier = (float) config('honeyblock.timeout_multiplier', 1.0);
             $sleepSeconds = (int) round($blockedCount * $baseTimeout * $multiplier);
+
             // print ($sleepSeconds);
             if ($sleepSeconds > 0) {
                 sleep($sleepSeconds);
@@ -61,17 +61,16 @@ class HoneyblockMiddleware
             if ($normalizedTrap !== '' && Str::startsWith($path, $normalizedTrap)) {
                 $this->honeyblock->block($ip, "trap:{$normalizedTrap}");
                 $trapped = true;
+
                 break;
             }
         }
-
-       
 
         // 5. Process the request
         $response = $next($request);
 
         // 6. Block IP if 404 trapping is enabled and response is a 404
-        if (!$trapped && config('honeyblock.all_404', false) && $response->getStatusCode() === 404) {
+        if (! $trapped && config('honeyblock.all_404', false) && $response->getStatusCode() === 404) {
             $this->honeyblock->block($ip, '404');
         }
 

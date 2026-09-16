@@ -25,7 +25,7 @@ class HoneyblockWhitelistCommand extends Command
         if ($ip !== '') {
             DB::table('honeyblock_whitelist')->updateOrInsert(
                 ['ip' => $ip],
-                ['created_at' => now(), 'updated_at' => now()]
+                ['created_at' => now(), 'updated_at' => now()],
             );
 
             $this->info(__('IP address :ip has been whitelisted.', ['ip' => $ip]));

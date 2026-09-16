@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Honeyblock\Honeyblock;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class Honeyblock
@@ -25,8 +26,8 @@ class Honeyblock
         }
 
         return DB::table('honeyblock_requests')
-        ->where('ip', $ip)
-        ->count();
+            ->where('ip', $ip)
+            ->count();
     }
 
     public function forgive(string $ip): int
@@ -55,7 +56,7 @@ class Honeyblock
     {
         return DB::table('honeyblock_whitelist')->updateOrInsert(
             ['ip' => $ip],
-            ['created_at' => now(), 'updated_at' => now()]
+            ['created_at' => now(), 'updated_at' => now()],
         );
     }
 
@@ -78,15 +79,16 @@ class Honeyblock
      */
     public function listWhitelisted(): array
     {
-        /** @var array<int, string> */
         return DB::table('honeyblock_whitelist')
             ->pluck('ip')
             ->all();
     }
 
+    /**
+     * @return array<int, array{ip: string, trap: string, created_at: string}>
+     */
     public function listBlockedRequests(): array
     {
-        /** @var array<int, array{ip: string, trap: string, created_at: string}> */
         return DB::table('honeyblock_requests')
             ->select(['ip', 'trap', 'created_at'])
             ->get()
@@ -98,13 +100,15 @@ class Honeyblock
             ->all();
     }
 
+    /**
+     * @return array<int, array{ip: string, count: int}>
+     */
     public function listBlockedIps(): array
     {
-        /** @var array<int, array{ip: string, count: int}> */
         return DB::table('honeyblock_requests')
             ->get(['ip'])
             ->groupBy('ip')
-            ->map(static fn (\Illuminate\Support\Collection $items, string $ip): array => [
+            ->map(static fn (Collection $items, string $ip): array => [
                 'ip' => $ip,
                 'count' => $items->count(),
             ])

@@ -19,7 +19,13 @@ class HoneyblockForgiveCommand extends Command
 
     public function handle(): int
     {
-        $ip = (string) $this->argument('ip');
+        $ip = $this->argument('ip');
+
+        if (! is_string($ip)) {
+            $this->error(__('Invalid IP address provided.'));
+
+            return self::FAILURE;
+        }
 
         $count = Honeyblock::forgive($ip);
 
