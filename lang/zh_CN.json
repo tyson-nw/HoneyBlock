@@ -1,0 +1,15 @@
+{
+    "List all blocked IP addresses and their unforgiven request counts": "列出所有被封禁的 IP 地址及其未原谅的请求次数",
+    "No active blocked IPs found.": "未找到处于封禁状态的 IP。",
+    "IP Address": "IP 地址",
+    "Unforgiven Requests": "未原谅的请求数",
+    "Mark all current requests for a given IP address as forgiven": "将指定 IP 地址的所有当前请求标记为已原谅",
+    "The IP address to forgive": "要原谅的 IP 地址",
+    "Forgave :count active request(s) for IP: :ip": "已原谅 IP :ip 的 :count 次活动请求",
+    "Add an IP address to the whitelist or list all whitelisted IPs": "将 IP 地址添加到白名单，或列出所有白名单 IP",
+    "Optional IP address to add to whitelist": "要添加到白名单的可选 IP 地址",
+    "IP address :ip has been whitelisted.": "IP 地址 :ip 已添加到白名单。",
+    "No whitelisted IPs found.": "未找到白名单 IP。",
+    "Whitelisted IP Address": "白名单 IP 地址",
+    "Added At": "添加时间"
+}

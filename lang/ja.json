@@ -1,0 +1,15 @@
+{
+    "List all blocked IP addresses and their unforgiven request counts": "ブロックされたすべてのIPアドレスと未解除のリクエスト数を一覧表示します",
+    "No active blocked IPs found.": "アクティブなブロック対象IPは見つかりませんでした。",
+    "IP Address": "IPアドレス",
+    "Unforgiven Requests": "未解除のリクエスト数",
+    "Mark all current requests for a given IP address as forgiven": "指定されたIPアドレスの現在のすべてのリクエストを解除済みに設定します",
+    "The IP address to forgive": "解除するIPアドレス",
+    "Forgave :count active request(s) for IP: :ip": "IP: :ip のアクティブなリクエスト :count 件を解除しました",
+    "Add an IP address to the whitelist or list all whitelisted IPs": "IPアドレスをホワイトリストに追加するか、すべてのホワイトリスト登録済みIPを一覧表示します",
+    "Optional IP address to add to whitelist": "ホワイトリストに追加する任意のIPアドレス",
+    "IP address :ip has been whitelisted.": "IPアドレス :ip をホワイトリストに追加しました。",
+    "No whitelisted IPs found.": "ホワイトリストに登録されたIPは見つかりませんでした。",
+    "Whitelisted IP Address": "ホワイトリスト登録済みIPアドレス",
+    "Added At": "追加日時"
+}

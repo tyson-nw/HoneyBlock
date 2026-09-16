@@ -1,0 +1,15 @@
+{
+    "List all blocked IP addresses and their unforgiven request counts": "Alle blockierten IP-Adressen und deren nicht vergebene Anfragen auflisten",
+    "No active blocked IPs found.": "Keine aktiv blockierten IP-Adressen gefunden.",
+    "IP Address": "IP-Adresse",
+    "Unforgiven Requests": "Nicht vergebene Anfragen",
+    "Mark all current requests for a given IP address as forgiven": "Alle aktuellen Anfragen einer bestimmten IP-Adresse als vergeben markieren",
+    "The IP address to forgive": "Die zu vergebende IP-Adresse",
+    "Forgave :count active request(s) for IP: :ip": ":count aktive Anfrage(n) für IP :ip vergeben",
+    "Add an IP address to the whitelist or list all whitelisted IPs": "Eine IP-Adresse zur Whitelist hinzufügen oder alle Whitelist-IPs auflisten",
+    "Optional IP address to add to whitelist": "Optionale IP-Adresse für die Whitelist",
+    "IP address :ip has been whitelisted.": "IP-Adresse :ip wurde zur Whitelist hinzugefügt.",
+    "No whitelisted IPs found.": "Keine IPs in der Whitelist gefunden.",
+    "Whitelisted IP Address": "Whitelist IP-Adresse",
+    "Added At": "Hinzugefügt am"
+}
