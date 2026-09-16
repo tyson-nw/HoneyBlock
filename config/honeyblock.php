@@ -17,7 +17,7 @@ return [
     ],
 
     // Timeout added to trapped request ip
-    'base_timeout' => 100,
+    'base_timeout' => 1,
 
     // Timeout multiplier after each trapped request
     'timeout_multiplier' => 2,

@@ -14,7 +14,6 @@ return new class extends Migration
             $table->id();
             $table->ipAddress('ip');
             $table->string('trap');
-            $table->boolean('forgiven');
             $table->index('ip');
             $table->timestamps();
         });

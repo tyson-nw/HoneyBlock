@@ -31,7 +31,8 @@ class HoneyblockServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadJsonTranslationsFrom(__DIR__.'/../lang');
-
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        
         $kernel = $this->app->make(Kernel::class);
         $kernel->pushMiddleware(HoneyblockMiddleware::class);
 
