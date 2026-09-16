@@ -52,9 +52,9 @@ php artisan vendor:publish --tag="honeyblock"
 ### Configuration
 - **all_404** If all 404 requests should be treated as traps.
 - **traps** List of the beginnings of routes that should be traps.
-- **base_timeout** The amount of time to add to the first trapped request
-- **timeout_multiplier** The multiplier to increase the amount of time each subsequent request increases the timeout.
-- **decay** The amount of time before a trapped request falls off the ip's record.
+- **base_timeout** The amount of time to add to the first trapped request. Has to be equal to or greater than 1.0 seconds.
+- **timeout_multiplier** The multiplier to increase the amount of time each subsequent request increases the timeout. Has to be greater than or equal to 1.0.
+- **decay** The amount of time before a trapped request falls off the ip's record in seconds.
 
 ### Console Commands
 - **Forgive <$ip>** Takes the ip and clears all trap records.

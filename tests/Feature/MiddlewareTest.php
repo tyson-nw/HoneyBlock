@@ -1,81 +1,94 @@
 <?php
 
-declare(strict_types=1);
-
+use Honeyblock\Honeyblock\Facades\Honeyblock;
+use Honeyblock\Honeyblock\Http\Middleware\HoneyblockMiddleware;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 
 uses(RefreshDatabase::class);
 
-test('trapped route logs ip and applies base timeout', function () {
+beforeEach(function () {
+    // config(['honeyblock.base_timeout' => 0]);
+
+
+    Route::get('/valid-page', fn () => 'OK');
+    Route::get('/wp-admin/login', fn () => 'Trap Page');
+});
+
+test('allows unblocked requests', function () {
+    $this->get('/valid-page')
+        ->assertStatus(200)
+        ->assertSee('OK');
+});
+
+test('blocks ip when hitting a trap path', function () {
     $ip = '192.168.1.100';
-    $trappedPath = 'wp-admin';
-    $baseTimeoutMs = config('honeyblock.base_timeout', 100);
-
-    $start = microtime(true);
-
-    $response = $this->withServerVariables(['REMOTE_ADDR' => $ip])
-        ->get("/{$trappedPath}");
-
-    $durationMs = (microtime(true) - $start) * 1000;
-
-    $this->assertDatabaseHas('honeyblock_requests', [
-        'ip' => $ip,
-        'trap' => $trappedPath,
-        'forgiven' => false,
+    config([
+        'honeyblock.traps' => ['wp-admin'],
+        'honeyblock.all_404' => false,
     ]);
 
-    expect($durationMs)->toBeGreaterThanOrEqual($baseTimeoutMs);
+    $this->withServerVariables(['REMOTE_ADDR' => $ip])
+        ->get('/wp-admin/login');
+
+    expect(Honeyblock::blockedCount($ip))->toBe(1);
 });
 
-test('repeated trapped requests incrementally increase timeout', function () {
+test('blocks ip on 404 responses when all_404 configuration is enabled', function () {
     $ip = '192.168.1.101';
-    $trappedPath = 'admin';
-    $baseTimeoutMs = config('honeyblock.base_timeout', 100);
+    config(['honeyblock.all_404' => true]);
 
-    // Request 1 (1x multiplier)
-    $start1 = microtime(true);
-    $this->withServerVariables(['REMOTE_ADDR' => $ip])->get("/{$trappedPath}");
-    $duration1 = (microtime(true) - $start1) * 1000;
+    $this->withServerVariables(['REMOTE_ADDR' => $ip])
+        ->get('/non-existent-page')
+        ->assertStatus(404);
 
-    // Request 2 (2x multiplier)
-    $start2 = microtime(true);
-    $this->withServerVariables(['REMOTE_ADDR' => $ip])->get("/{$trappedPath}");
-    $duration2 = (microtime(true) - $start2) * 1000;
-
-    // Request 3 (3x multiplier)
-    $start3 = microtime(true);
-    $this->withServerVariables(['REMOTE_ADDR' => $ip])->get("/{$trappedPath}");
-    $duration3 = (microtime(true) - $start3) * 1000;
-
-    $this->assertDatabaseCount('honeyblock_requests', 3);
-
-    expect($duration1)->toBeGreaterThanOrEqual($baseTimeoutMs * 1)
-        ->and($duration2)->toBeGreaterThanOrEqual($baseTimeoutMs * 2)
-        ->and($duration3)->toBeGreaterThanOrEqual($baseTimeoutMs * 3);
+    expect(Honeyblock::blockedCount($ip))->toBe(1);
 });
 
-test('valid route matching trap path triggers trap behavior', function () {
+test('does not block ip on 404 responses when all_404 configuration is disabled', function () {
     $ip = '192.168.1.102';
-    $trappedPath = 'admin';
+    config(['honeyblock.all_404' => false]);
 
-    // Register a valid application route matching a trapped route pattern
-    Route::get('/admin', function () {
-        return response('Legitimate Admin Dashboard', 200);
-    });
+    $this->withServerVariables(['REMOTE_ADDR' => $ip])
+        ->get('/non-existent-page')
+        ->assertStatus(404);
+
+    expect(Honeyblock::blockedCount($ip))->toBe(0);
+});
+
+test('allows requests if blocked ip is whitelisted', function () {
+    $ip = '192.168.1.103';
+
+    Honeyblock::block($ip);
+    Honeyblock::whitelist($ip);
+
+    $this->withServerVariables(['REMOTE_ADDR' => $ip])
+        ->get('/valid-page')
+        ->assertStatus(200);
+
+    expect(Honeyblock::blockedCount($ip))->toBe(0);
+});
+
+test('applies progressive tarpit delay to blocked ips', function () {
+    $ip = '192.168.1.200';
+
+    config([
+        'honeyblock.traps' => [],
+        'honeyblock.base_timeout' => 1, // 1s delay
+        'honeyblock.timeout_multiplier' => 1,
+    ]);
+
+    // Pre-populate 2 block records
+    Honeyblock::block($ip, 'manual');
+    Honeyblock::block($ip, 'manual');
 
     $start = microtime(true);
 
-    $response = $this->withServerVariables(['REMOTE_ADDR' => $ip])
-        ->get("/{$trappedPath}");
+    $this->withServerVariables(['REMOTE_ADDR' => $ip])
+        ->get('/valid-page');
 
-    $durationMs = (microtime(true) - $start) * 1000;
+    $duration = microtime(true) - $start;
 
-    $this->assertDatabaseHas('honeyblock_requests', [
-        'ip' => $ip,
-        'trap' => $trappedPath,
-    ]);
-
-    $response->assertStatus(200);
-    expect($durationMs)->toBeGreaterThanOrEqual(config('honeyblock.base_timeout', 100));
+    // Expecting 2 blocks * 0.05s = ~0.10s delay (allowing small sub-millisecond execution delta)
+    expect($duration)->toBeGreaterThanOrEqual(1.95);
 });

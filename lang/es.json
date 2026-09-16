@@ -3,7 +3,7 @@
     "No active blocked IPs found.": "No se encontraron IPs bloqueadas activas.",
     "IP Address": "Dirección IP",
     "Unforgiven Requests": "Solicitudes no perdonadas",
-    "Mark all current requests for a given IP address as forgiven": "Marcar todas las solicitudes actuales de una dirección IP determinada como perdonadas",
+    "Remove blocked request records for a specific IP address": "Marcar todas las solicitudes actuales de una dirección IP determinada como perdonadas",
     "The IP address to forgive": "La dirección IP a perdonar",
     "Forgave :count active request(s) for IP: :ip": "Se perdonó(aron) :count solicitud(es) activa(s) para la IP: :ip",
     "Add an IP address to the whitelist or list all whitelisted IPs": "Agregar una dirección IP a la lista blanca o listar todas las IPs en la lista blanca",

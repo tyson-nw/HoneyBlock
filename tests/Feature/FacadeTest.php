@@ -19,25 +19,23 @@ test('facade can programmatically block an ip', function () {
     $this->assertDatabaseHas('honeyblock_requests', [
         'ip' => $ip,
         'trap' => $trap,
-        'forgiven' => false,
     ]);
 });
 
-test('facade can forgive active requests for an ip', function () {
+test('facade can forgive an ip by deleting its blocked request records', function () {
     $ip = '192.168.1.100';
 
     DB::table('honeyblock_requests')->insert([
-        ['ip' => $ip, 'trap' => 'admin', 'forgiven' => false, 'created_at' => now(), 'updated_at' => now()],
-        ['ip' => $ip, 'trap' => 'login', 'forgiven' => false, 'created_at' => now(), 'updated_at' => now()],
+        ['ip' => $ip, 'trap' => 'admin', 'created_at' => now(), 'updated_at' => now()],
+        ['ip' => $ip, 'trap' => 'login', 'created_at' => now(), 'updated_at' => now()],
     ]);
 
-    $affected = Honeyblock::forgive($ip);
+    $deletedCount = Honeyblock::forgive($ip);
 
-    expect($affected)->toBe(2);
+    expect($deletedCount)->toBe(2);
 
     $this->assertDatabaseMissing('honeyblock_requests', [
         'ip' => $ip,
-        'forgiven' => false,
     ]);
 });
 
@@ -125,4 +123,31 @@ test('facade can list all blocked ips with unforgiven request counts', function 
         'ip' => '192.168.1.101',
         'count' => 1,
     ]);
+});
+
+test('facade can prune requests older than the configured decay time in seconds', function () {
+    config(['honeyblock.decay' => 3600]); // 3600 seconds (1 hour)
+
+    // Expired record (2 hours old)
+    DB::table('honeyblock_requests')->insert([
+        'ip' => '192.168.1.1',
+        'trap' => 'manual',
+        'created_at' => now()->subHours(2),
+        'updated_at' => now()->subHours(2),
+    ]);
+
+    // Active record (10 minutes old / 600 seconds)
+    DB::table('honeyblock_requests')->insert([
+        'ip' => '192.168.1.2',
+        'trap' => 'manual',
+        'created_at' => now()->subMinutes(10),
+        'updated_at' => now()->subMinutes(10),
+    ]);
+
+    $prunedCount = Honeyblock::pruneExpired();
+
+    expect($prunedCount)->toBe(1);
+
+    $this->assertDatabaseMissing('honeyblock_requests', ['ip' => '192.168.1.1']);
+    $this->assertDatabaseHas('honeyblock_requests', ['ip' => '192.168.1.2']);
 });

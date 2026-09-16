@@ -16,11 +16,11 @@ return [
         'manager',
     ],
 
-    // Timeout added to trapped request ip
-    'base_timeout' => 1,
+    // Timeout added to trapped request ip in seconds
+    'base_timeout' => 0.01,
 
     // Timeout multiplier after each trapped request
-    'timeout_multiplier' => 2,
+    'timeout_multiplier' => 1.0,
 
     // time before a honeypot request is forgotten. 0 is never. default 1 hour
     'decay' => 1 * 60 * 60,

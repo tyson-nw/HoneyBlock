@@ -4,35 +4,30 @@ declare(strict_types=1);
 
 namespace Honeyblock\Honeyblock\Console\Commands;
 
+use Honeyblock\Honeyblock\Facades\Honeyblock;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class HoneyblockForgiveCommand extends Command
 {
+    protected $signature = 'honeyblock:forgive {ip : The IP address to forgive}';
+
     public function __construct()
     {
-        $this->signature = 'honeyblock:forgive {ip : '.__('The IP address to forgive').'}';
         parent::__construct();
-        $this->description = __('Mark all current requests for a given IP address as forgiven');
+        $this->description = __('Remove blocked request records for a specific IP address');
     }
 
     public function handle(): int
     {
-        $rawIp = $this->argument('ip');
-        $ip = is_string($rawIp) ? $rawIp : '';
+        $ip = (string) $this->argument('ip');
 
-        $affected = DB::table('honeyblock_requests')
-            ->where('ip', $ip)
-            ->where('forgiven', false)
-            ->update([
-                'forgiven' => true,
-                'updated_at' => now(),
-            ]);
+        $count = Honeyblock::forgive($ip);
 
-        $this->info(__('Forgave :count active request(s) for IP: :ip', [
-            'count' => $affected,
-            'ip' => $ip,
-        ]));
+        if ($count > 0) {
+            $this->info("Forgave IP address: {$ip}");
+        } else {
+            $this->warn("No blocked records found for IP address: {$ip}");
+        }
 
         return self::SUCCESS;
     }

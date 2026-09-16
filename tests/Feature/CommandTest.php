@@ -9,10 +9,9 @@ uses(RefreshDatabase::class);
 
 test('list command displays ips and unforgiven counts', function () {
     DB::table('honeyblock_requests')->insert([
-        ['ip' => '192.168.1.10', 'trap' => 'admin', 'forgiven' => false, 'created_at' => now(), 'updated_at' => now()],
-        ['ip' => '192.168.1.10', 'trap' => 'wp-admin', 'forgiven' => false, 'created_at' => now(), 'updated_at' => now()],
-        ['ip' => '192.168.1.10', 'trap' => 'manager', 'forgiven' => true, 'created_at' => now(), 'updated_at' => now()],
-        ['ip' => '192.168.1.20', 'trap' => 'phpmyadmin', 'forgiven' => false, 'created_at' => now(), 'updated_at' => now()],
+        ['ip' => '192.168.1.10', 'trap' => 'admin'],
+        ['ip' => '192.168.1.10', 'trap' => 'wp-admin'],
+        ['ip' => '192.168.1.20', 'trap' => 'phpmyadmin'],
     ]);
 
     $this->artisan('honeyblock:list')
@@ -26,26 +25,25 @@ test('list command displays ips and unforgiven counts', function () {
         ->assertExitCode(0);
 });
 
-test('forgive command updates ip records to forgiven', function () {
+test('forgive command deletes ip records from database', function () {
     $ip = '192.168.1.50';
 
     DB::table('honeyblock_requests')->insert([
-        ['ip' => $ip, 'trap' => 'admin', 'forgiven' => false, 'created_at' => now(), 'updated_at' => now()],
-        ['ip' => $ip, 'trap' => 'wp-admin', 'forgiven' => false, 'created_at' => now(), 'updated_at' => now()],
+        ['ip' => $ip, 'trap' => 'admin', 'created_at' => now(), 'updated_at' => now()],
+        ['ip' => $ip, 'trap' => 'wp-admin', 'created_at' => now(), 'updated_at' => now()],
     ]);
+
+    $this->assertDatabaseCount('honeyblock_requests', 2);
 
     $this->artisan('honeyblock:forgive', ['ip' => $ip])
+        ->expectsOutput("Forgave IP address: {$ip}")
         ->assertExitCode(0);
-
-    $this->assertDatabaseHas('honeyblock_requests', [
-        'ip' => $ip,
-        'forgiven' => true,
-    ]);
 
     $this->assertDatabaseMissing('honeyblock_requests', [
         'ip' => $ip,
-        'forgiven' => false,
     ]);
+
+    $this->assertDatabaseCount('honeyblock_requests', 0);
 });
 
 test('whitelist command adds ip or lists whitelisted ips', function () {

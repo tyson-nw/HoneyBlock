@@ -4,73 +4,77 @@ declare(strict_types=1);
 
 namespace Honeyblock\Honeyblock\Http\Middleware;
 
+use Honeyblock\Honeyblock\Honeyblock;
+
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class HoneyblockMiddleware
 {
+    protected Honeyblock $honeyblock;
+
+    public function __construct(?Honeyblock $honeyblock = null)
+    {
+        $this->honeyblock = $honeyblock ?? app(Honeyblock::class);
+    }
+
     public function handle(Request $request, Closure $next): Response
     {
         $ip = $request->ip();
 
-        // 1. Check if IP is whitelisted
-        $isWhitelisted = DB::table('honeyblock_whitelist')
-            ->where('ip', $ip)
-            ->exists();
+        $trapped = false;
 
-        if ($isWhitelisted) {
+        if (! $ip) {
             return $next($request);
         }
 
-        // 2. Check if path matches any trap pattern
-        $path = trim($request->path(), '/');
-        $traps = config('honeyblock.traps', []);
+        // 1. Bypass all checks if the IP is whitelisted
+        if ($this->honeyblock->isWhitelisted($ip)) {
+            return $next($request);
+        }
 
-        $isTrapped = false;
+        // 2. Prune records older than decay threshold
+        $this->honeyblock->pruneExpired();
+
+        // 3. Tarpit delay based on total accumulated blocks for this IP
+        $blockedCount = $this->honeyblock->blockedCount($ip);
+
+        if ($blockedCount > 0) {
+            $baseTimeout = (float) config('honeyblock.base_timeout', 1);
+            $multiplier = (float) config('honeyblock.timeout_multiplier', 1.0);
+            $sleepSeconds = (int) round($blockedCount * $baseTimeout * $multiplier);
+            // print ($sleepSeconds);
+            if ($sleepSeconds > 0) {
+                sleep($sleepSeconds);
+            }
+        }
+
+        // 4. Check path against trap routes
+        $path = ltrim($request->path(), '/');
+        $traps = (array) config('honeyblock.traps', []);
+
         foreach ($traps as $trap) {
-            if ($request->is($trap) || $path === trim((string) $trap, '/')) {
-                $isTrapped = true;
+            $normalizedTrap = ltrim((string) $trap, '/');
 
+            if ($normalizedTrap !== '' && Str::startsWith($path, $normalizedTrap)) {
+                $this->honeyblock->block($ip, "trap:{$normalizedTrap}");
+                $trapped = true;
                 break;
             }
         }
 
-        if ($isTrapped) {
-            // 3. Purge requests older than decay threshold
-            $decaySeconds = (int) config('honeyblock.decay', 0);
+       
 
-            if ($decaySeconds > 0) {
-                DB::table('honeyblock_requests')
-                    ->where('ip', $ip)
-                    ->where('created_at', '<', now()->subSeconds($decaySeconds))
-                    ->delete();
-            }
+        // 5. Process the request
+        $response = $next($request);
 
-            // 4. Record current request
-            DB::table('honeyblock_requests')->insert([
-                'ip' => $ip,
-                'trap' => $path,
-                'forgiven' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // 5. Calculate penalty based on total active unforgiven requests
-            $requestCount = DB::table('honeyblock_requests')
-                ->where('ip', $ip)
-                ->where('forgiven', false)
-                ->count();
-
-            $baseTimeoutMs = (int) config('honeyblock.base_timeout', 100);
-            $delayMs = $baseTimeoutMs * $requestCount;
-
-            if ($delayMs > 0) {
-                usleep($delayMs * 1000);
-            }
+        // 6. Block IP if 404 trapping is enabled and response is a 404
+        if (!$trapped && config('honeyblock.all_404', false) && $response->getStatusCode() === 404) {
+            $this->honeyblock->block($ip, '404');
         }
 
-        return $next($request);
+        return $response;
     }
 }

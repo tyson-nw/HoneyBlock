@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static bool block(string $ip, string $trap = 'manual')
  * @method static int forgive(string $ip)
+ * @method static int isBlocked(string $ip)
  * @method static bool whitelist(string $ip)
  * @method static bool removeFromWhitelist(string $ip)
  * @method static bool isWhitelisted(string $ip)

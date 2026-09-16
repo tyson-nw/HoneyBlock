@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Honeyblock\Honeyblock\Console\Commands;
 
+use Honeyblock\Honeyblock\Facades\Honeyblock;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class HoneyblockListCommand extends Command
 {
@@ -19,26 +19,18 @@ class HoneyblockListCommand extends Command
 
     public function handle(): int
     {
-        $counts = DB::table('honeyblock_requests')
-            ->where('forgiven', false)
-            ->pluck('ip')
-            ->countBy();
+        $blockedIps = Honeyblock::listBlockedIps();
 
-        if ($counts->isEmpty()) {
+        if (empty($blockedIps)) {
             $this->info(__('No active blocked IPs found.'));
 
             return self::SUCCESS;
         }
 
-        $rows = $counts->map(fn (int $count, string $ip) => [
-            'ip' => $ip,
-            'count' => (string) $count,
-        ])->values()->toArray();
-
         $this->table([
             __('IP Address'),
             __('Unforgiven Requests'),
-        ], $rows);
+        ], $blockedIps);
 
         return self::SUCCESS;
     }

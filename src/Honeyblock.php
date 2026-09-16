@@ -13,21 +13,42 @@ class Honeyblock
         return DB::table('honeyblock_requests')->insert([
             'ip' => $ip,
             'trap' => $trap,
-            'forgiven' => false,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    public function blockedCount(string $ip): int
+    {
+        if ($this->isWhitelisted($ip)) {
+            return 0;
+        }
+
+        return DB::table('honeyblock_requests')
+        ->where('ip', $ip)
+        ->count();
     }
 
     public function forgive(string $ip): int
     {
         return DB::table('honeyblock_requests')
             ->where('ip', $ip)
-            ->where('forgiven', false)
-            ->update([
-                'forgiven' => true,
-                'updated_at' => now(),
-            ]);
+            ->delete();
+    }
+
+    public function pruneExpired(): int
+    {
+        $decay = (int) config('honeyblock.decay');
+
+        if ($decay <= 0) {
+            return 0;
+        }
+
+        $cutoff = now()->subSeconds((int) $decay);
+
+        return DB::table('honeyblock_requests')
+            ->where('created_at', '<', $cutoff)
+            ->delete();
     }
 
     public function whitelist(string $ip): bool
@@ -51,7 +72,7 @@ class Honeyblock
             ->where('ip', $ip)
             ->delete() > 0;
     }
-    
+
     /**
      * @return array<int, string>
      */
@@ -67,7 +88,6 @@ class Honeyblock
     {
         /** @var array<int, array{ip: string, trap: string, created_at: string}> */
         return DB::table('honeyblock_requests')
-            ->where('forgiven', false)
             ->select(['ip', 'trap', 'created_at'])
             ->get()
             ->map(static fn (object $item): array => [
@@ -82,14 +102,13 @@ class Honeyblock
     {
         /** @var array<int, array{ip: string, count: int}> */
         return DB::table('honeyblock_requests')
-            ->where('forgiven', false)
-            ->select('ip', DB::raw('count(*) as aggregate_count'))
+            ->get(['ip'])
             ->groupBy('ip')
-            ->get()
-            ->map(static fn (object $item): array => [
-                'ip' => (string) $item->ip,
-                'count' => (int) $item->aggregate_count,
+            ->map(static fn (\Illuminate\Support\Collection $items, string $ip): array => [
+                'ip' => $ip,
+                'count' => $items->count(),
             ])
+            ->values()
             ->all();
     }
 }
